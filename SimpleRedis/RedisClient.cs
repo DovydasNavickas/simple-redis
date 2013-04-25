@@ -154,6 +154,7 @@ namespace SimpleRedis
         RedisResult ReadBulk()
         {
             int len = ReadLength(), offset = 0, read;
+            if (len == -1) return new RedisResult(null);
             byte[] data = new byte[len];
             while (len > 0 && (read = netStream.Read(data, offset, len)) > 0)
             {
@@ -161,11 +162,18 @@ namespace SimpleRedis
                 offset += read;
             }
             if (len != 0) throw EOF();
+            ReadEndOfLine();
             return new RedisResult(data);
+        }
+        void ReadEndOfLine()
+        {
+            if(netStream.ReadByte() != '\r' || netStream.ReadByte() != '\n')
+                throw new InvalidOperationException("Expected end-of-line");
         }
         object[] ReadMultiBulk()
         {
             int len = ReadLength();
+            if (len == -1) return null;
             object[] results = new object[len];
             for (int i = 0; i < len; i++)
             {

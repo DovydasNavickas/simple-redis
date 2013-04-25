@@ -72,7 +72,7 @@ namespace SimpleRedis
             byte[] bytes;
             if (GetBytes(out bytes))
             {
-                value = Encoding.UTF8.GetString(bytes);
+                value = bytes == null ? null : Encoding.UTF8.GetString(bytes);
                 return true;
             }
             value = null;
@@ -118,7 +118,31 @@ namespace SimpleRedis
 
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            if (binder.Type == typeof(byte[]))
+            Type type = binder.Type;
+            // handle nulls
+            if (type.IsClass)
+            {
+                if (value == null)
+                {
+                    result = null;
+                    return true;
+                }
+            }
+            else
+            {
+                Type underlyingType = Nullable.GetUnderlyingType(type);
+                if (underlyingType != null)
+                {
+                    if (value == null)
+                    {
+                        result = null;
+                        return true;
+                    }
+                    type = underlyingType;
+                }
+            }
+            
+            if (type == typeof(byte[]))
             {
                 byte[] val;
                 if (GetBytes(out val))
@@ -127,7 +151,7 @@ namespace SimpleRedis
                     return true;
                 }
             }
-            if (binder.Type == typeof(string))
+            if (type == typeof(string))
             {
                 string val;
                 if (GetString(out val))
@@ -136,7 +160,7 @@ namespace SimpleRedis
                     return true;
                 }
             }
-            if (binder.Type == typeof(int))
+            if (type == typeof(int))
             {
                 int val;
                 if (GetInt32(out val))
@@ -145,7 +169,7 @@ namespace SimpleRedis
                     return true;
                 }
             }
-            if (binder.Type == typeof(long))
+            if (type == typeof(long))
             {
                 long val;
                 if (GetInt64(out val))
@@ -154,7 +178,7 @@ namespace SimpleRedis
                     return true;
                 }
             }
-            if (binder.Type == typeof(bool))
+            if (type == typeof(bool))
             {
                 bool val;
                 if (GetBoolean(out val))

@@ -65,5 +65,28 @@ namespace SimpleRedis.Tests
                 client.incr("fail_incr"); // what is numeric "some val" + 1 ?
             }
         }
+
+        [Test]
+        public void Lists()
+        {
+            using (dynamic client = new RedisClient())
+            {
+                client.del("list");
+                client.rpush("list", "item 1");
+                client.rpush("list", "item 2");
+
+                string a = client.lpop("list");
+                string b = client.lpop("list");
+                string c = client.lpop("list");
+
+                client.rpush("list", "item 3");
+                string d = client.lpop("list");
+
+                Assert.AreEqual(a, "item 1");
+                Assert.AreEqual(b, "item 2");
+                Assert.IsNull(c);
+                Assert.AreEqual(d, "item 3");
+            }
+        }
     }
 }
